@@ -6,6 +6,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -O3 -Wall")
 include_directories(src src/sparse_hashtable)
 
 file(GLOB SOURCES src/* src/sparse_hashtable/* )
+file(GLOB WRAPPER wrapper/* )
 
 find_package(OpenCV REQUIRED)
 find_package(OpenMP REQUIRED)
@@ -29,4 +30,12 @@ foreach(EXAMPLE ${EXAMPLES})
     target_link_libraries(${PREFIX} tcmalloc)
   endif()
 endforeach(EXAMPLE)
+
+add_exectuable(pqtablewrapper ${WRAPPER} ${SOURCES})
+target_link_libraries(pqtablewrapper ${OpenCV_LIBS})
+if(TCMALLOC_LIB)
+  target_link_libraries(pqtablewrapper tcmalloc)
+endif()
+
+
 
