@@ -9,39 +9,28 @@
 #include <fstream>
 #include <iostream>
 
-#include "lib-annoy/src/annoylib.h"
-#include "lib-annoy/src/kissrandom.h"
+#include "pq_table.h"
+#include "utils.h"
 
 extern "C" {
 
-static int num_trees = 0;
-static int search_k = 0;
+static int M = 4;
 
 bool configure(const char* var, const char* val) {
-  if (strcmp(var, "num_trees") == 0) {
+  if (strcmp(var, "M") == 0) {
     char* end;
     errno = 0;
     long k = strtol(val, &end, 10);
     if (errno != 0 || *val == 0 || *end != 0 || k < 0) {
       return false;
     } else {
-      num_trees = k;
-      return true;
-    }
-  } else if (strcmp(var, "search_k") == 0) {
-    char* end;
-    errno = 0;
-    long k = strtol(val, &end, 10);
-    if (errno != 0 || *val == 0 || *end != 0 || k < 0) {
-      return false;
-    } else {
-      search_k = k;
+      M = k;
       return true;
     }
   } else return false;
 }
 
-static std::vector<std::vector<double>> pointset;
+static std::vector<std::vector<float>> pointset;
 
 bool end_configure(void) {
   return true;
@@ -49,10 +38,10 @@ bool end_configure(void) {
 
 static size_t entry_count = 0;
 
-std::vector<double> parseEntry(const char* entry) {
-  std::vector<double> e;
+std::vector<float> parseEntry(const char* entry) {
+  std::vector<float> e;
   std::string line(entry);
-  double x;
+  float x;
   auto sstr = std::istringstream(line);
   while (sstr >> x) {
     e.push_back(x);
@@ -67,42 +56,59 @@ bool train(const char* entry) {
   return true;
 }
 
-static AnnoyIndex<int, double, Euclidean, Kiss32Random>* ds = nullptr;
-static std::vector<int> results_idxs;
-static std::vector<double> parsed_entry; 
+static pqtable::PQ* pq; 
+static pqtable::PQTable* tbl;
+static std::vector<std::pair<int,float>> results;
+static std::vector<float> parsed_entry; 
 static size_t position = 0;
 
 void end_train(void) {
-  ds = new AnnoyIndex<int, double, Euclidean, Kiss32Random>((pointset[0]).size());
-  for (int i = 0; i < pointset.size(); i++) {
-	ds->add_item(i, &((pointset[i])[0]));
-  }
-  pointset.clear();
-  pointset.shrink_to_fit();
-  ds->build(num_trees);
+    // (3) Train a product quantizer
+    int M = 4;
+    // Take 1% of the point set as training data
+    std::vector<std::vector<float>> learnset;
+    for (int i = 0; i < pointset.size() / 100; i++) {
+	learnset.push_back(pointset[i]);
+    } 
+    pq = new pqtable::PQ(pqtable::PQ::Learn(learnset, M));
+
+
+    // (4) Encode vectors to PQ-codes
+    std::cerr << "=== Encode vectors into PQ codes ===" << std::endl;
+    pqtable::UcharVecs codes = pq->Encode(pointset);
+
+
+    // (5) Build a PQTable
+    std::cerr << "=== Build PQTable ===" << std::endl;
+    tbl = new pqtable::PQTable(pq->GetCodewords(), codes);
+    
+    pointset.clear();
+    pointset.shrink_to_fit();
+    delete pq;
 }
 
 bool prepare_query(const char* entry) {
   position = 0;
-  results_idxs.clear();
+  results.clear();
   parsed_entry = parseEntry(entry);
   return true;
 }
 
 size_t query(const char* entry, size_t k) {
-  ds->get_nns_by_vector(&(parsed_entry[0]), k, search_k, &results_idxs, nullptr);
-  return results_idxs.size();
+  results = tbl->Query(parsed_entry, k); 
+  return results.size();
 }
 
 
 size_t query_result(void) {
-  if (position < results_idxs.size()) {
-    auto elem = results_idxs[position++];
-    return elem;
+  if (position < results.size()) {
+    auto index = results[position++].second;
+    return index;
   } else return SIZE_MAX;
 }
 
 void end_query(void) {
+  delete tbl;
 }
 
 }

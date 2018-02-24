@@ -31,7 +31,7 @@ foreach(EXAMPLE ${EXAMPLES})
   endif()
 endforeach(EXAMPLE)
 
-add_exectuable(pqtablewrapper ${WRAPPER} ${SOURCES})
+add_executable(pqtablewrapper ${WRAPPER} ${SOURCES})
 target_link_libraries(pqtablewrapper ${OpenCV_LIBS})
 if(TCMALLOC_LIB)
   target_link_libraries(pqtablewrapper tcmalloc)
