@@ -2,6 +2,7 @@
 #include <cstdlib>
 #include <cstdbool>
 
+#include <algorithm>
 #include <string>
 #include <cstring>
 #include <vector>
@@ -63,20 +64,20 @@ static std::vector<float> parsed_entry;
 static size_t position = 0;
 
 void end_train(void) {
-    // (3) Train a product quantizer
-    int M = 4;
-    // Take 1% of the point set as training data
-    std::cerr << "Choosing learning set" << std::endl;
-//    std::vector<std::vector<float>> learnset;
-//    for (int i = 0; i < pointset.size() / 10; i++) {
-//	learnset.push_back(pointset[i]);
-//    } 
-//    std::cerr << "learn pq codes for " << learnset.size() << " elements " << std::endl;
+    // taken from examples/demo_siftsmall.cpp
+
+    // Take first 5% of the point set as training data
+    // Take at least 1024 points
+    std::vector<std::vector<float>> learnset;
+    std::cerr << "=== Learn Codes ===" << std::endl;
+    for (size_t i = 0; i < std::max(pointset.size() / 20, 1024UL); i++) {
+	learnset.push_back(pointset[i]);
+    } 
     pq = new pqtable::PQ(pqtable::PQ::Learn(pointset, M));
 
 
     // (4) Encode vectors to PQ-codes
-    std::cerr << "=== Encode vectors into PQ codes ===" << std::endl;
+    std::cerr << "=== Encode Codes ===" << std::endl;
     pqtable::UcharVecs codes = pq->Encode(pointset);
 
 
@@ -110,7 +111,6 @@ size_t query_result(void) {
 }
 
 void end_query(void) {
-  std::cerr << "End Query called" << std::endl;
   delete tbl;
 }
 
