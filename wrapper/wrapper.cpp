@@ -68,7 +68,7 @@ void end_train(void) {
     // Take 1% of the point set as training data
     std::cerr << "Choosing learning set" << std::endl;
     std::vector<std::vector<float>> learnset;
-    for (int i = 0; i < pointset.size() / 100; i++) {
+    for (int i = 0; i < pointset.size() / 10; i++) {
 	learnset.push_back(pointset[i]);
     } 
     std::cerr << "learn pq codes for " << learnset.size() << " elements " << std::endl;
