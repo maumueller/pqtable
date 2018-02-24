@@ -50,6 +50,7 @@ std::vector<float> parseEntry(const char* entry) {
 }
 
 bool train(const char* entry) {
+  std::cerr << "Got " << std::string(entry) << std::endl;
   auto parsed_entry = parseEntry(entry);
   pointset.push_back(parsed_entry);
   entry_count++;
@@ -66,10 +67,12 @@ void end_train(void) {
     // (3) Train a product quantizer
     int M = 4;
     // Take 1% of the point set as training data
+    std::cerr << "Choosing learning set" << std::endl;
     std::vector<std::vector<float>> learnset;
     for (int i = 0; i < pointset.size() / 100; i++) {
 	learnset.push_back(pointset[i]);
     } 
+    std::cerr << "learn pq codes" << std::endl;
     pq = new pqtable::PQ(pqtable::PQ::Learn(learnset, M));
 
 
