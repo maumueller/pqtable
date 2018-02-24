@@ -50,7 +50,6 @@ std::vector<float> parseEntry(const char* entry) {
 }
 
 bool train(const char* entry) {
-  std::cerr << "Got " << std::string(entry) << std::endl;
   auto parsed_entry = parseEntry(entry);
   pointset.push_back(parsed_entry);
   entry_count++;
@@ -72,7 +71,7 @@ void end_train(void) {
     for (int i = 0; i < pointset.size() / 100; i++) {
 	learnset.push_back(pointset[i]);
     } 
-    std::cerr << "learn pq codes" << std::endl;
+    std::cerr << "learn pq codes for " << learnset.size() << " elements " << std::endl;
     pq = new pqtable::PQ(pqtable::PQ::Learn(learnset, M));
 
 
