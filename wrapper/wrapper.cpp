@@ -67,12 +67,12 @@ void end_train(void) {
     int M = 4;
     // Take 1% of the point set as training data
     std::cerr << "Choosing learning set" << std::endl;
-    std::vector<std::vector<float>> learnset;
-    for (int i = 0; i < pointset.size() / 10; i++) {
-	learnset.push_back(pointset[i]);
-    } 
-    std::cerr << "learn pq codes for " << learnset.size() << " elements " << std::endl;
-    pq = new pqtable::PQ(pqtable::PQ::Learn(learnset, M));
+//    std::vector<std::vector<float>> learnset;
+//    for (int i = 0; i < pointset.size() / 10; i++) {
+//	learnset.push_back(pointset[i]);
+//    } 
+//    std::cerr << "learn pq codes for " << learnset.size() << " elements " << std::endl;
+    pq = new pqtable::PQ(pqtable::PQ::Learn(pointset, M));
 
 
     // (4) Encode vectors to PQ-codes
@@ -104,12 +104,13 @@ size_t query(const char* entry, size_t k) {
 
 size_t query_result(void) {
   if (position < results.size()) {
-    auto index = results[position++].second;
+    auto index = results[position++].first;
     return index;
   } else return SIZE_MAX;
 }
 
 void end_query(void) {
+  std::cerr << "End Query called" << std::endl;
   delete tbl;
 }
 
